@@ -876,3 +876,490 @@ ls
 cd
 clear
 ls
+clear
+ls
+cd ansible-config-artifact
+ls
+cd
+clear
+git pull
+git init
+clear
+git branch refactor
+git init
+clear
+git checkout -b refactor
+git branch -l
+git checkout main
+git checkout -b main
+clear
+git branch -l
+clear
+git branch refactor
+clear 
+git init
+git add .
+git commit -m "initial commit"
+clear
+git checkout -b refactor
+git branch -l
+git checkout refactor
+git pull
+ls
+clear
+git checkout master
+clear
+git checkout main
+git pull origin main
+git remote -v
+clear
+git remote add origin https://github.com/Dreyshantel/ansible-config-mgt.git
+git pull origin main
+git pull origin main --no-rebase
+git pull origin main --allow-unrelated-histories
+clear
+git pull origin main --no-rebase --allow-unrelated-histories
+clear
+git branch -l
+git checkout main
+git checkout -b main
+git branch -D main
+clear
+git branch -D refactor
+git branch -l
+cd main
+clear
+gir refactor
+clear
+git refactor
+clear
+git pull origin main
+git status
+git add ansible-config-mgt
+git add .
+git commit -m "Resolved merge conflicts"
+git pull origin main
+git checkout -b refactor
+branch -l
+git branch -l
+clear
+git branch refactor
+clear
+git checkout -b refactor
+cd
+clear
+git branch refactor
+git branch -l
+clear
+git checkout main
+git pull origin main
+git checkout -b refactor
+git checkout refactor
+git pull
+ls
+clear
+git branch --set-upstream-to=origin/main refactor
+git pull
+ls
+clear
+git init
+clear
+git branch refactor
+git branch -l
+git checkout main
+clear
+git branch -l
+git remote add origin https://github.com/Dreyshantel/repository.git
+clear
+git branch -l
+git checkout feature/ans-prj-01
+gir branch -l
+git branch -l
+clear
+git branch -l
+git branch refactor
+git checkout refactor
+git checkout -b refactor
+git checkout  refactor
+git checkout -f refactor
+ls -l ansible-config-artifact/inventory/
+ls -l ansible-config-artifact/playbooks/
+clear
+ls
+clear
+git branch
+git pull
+ls
+cd ansible-config-mgt
+ls
+cd
+ls
+cd inventory
+ls
+cd
+clear
+ls
+clear
+cd playbooks
+touch site.yml
+ls
+cd
+clear
+la
+clear
+ls
+clear
+mkdir static-assignments
+ls
+clear
+ls -ld static-assignments
+clear
+cd /home/ubuntu/static-assignments
+ls
+cd
+clear
+mv common.yml /home/ubuntu/static-assignments
+clear
+ls
+cd playbooks
+ls
+clear
+ls
+mv common.yml /home/ubuntu/static-assignments
+ls
+cd ..
+cd static-assignments
+ls
+cd
+cd playbooks
+ls
+clear
+sudo vi site.yml
+ls
+cd
+clear
+cd static-assignments
+ls
+touch common-del.yml
+ls
+sudo vi common-del.yml
+ls
+cd
+cd playbooks
+ls
+sudo vi site.yml
+clear
+cd
+clear
+cd /home/ubuntu/ansible-config-mgt/
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+ls
+cd playbooks
+ls
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+ls -l playbooks/site.yaml
+ls -l playbooks/
+cd
+ls -l playbooks/
+clear
+cd /home/ubuntu/ansible-config-mgt
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+chmod 644 playbooks/site.yaml
+cleart
+clear
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+cd
+ls
+clear
+cd /home/ubuntu/ansible-config-mgt/
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+cd 
+cd playbooks
+ls
+mv site.yml site.yaml
+ls
+sudo vi site.yaml
+cd
+clear
+cd /home/ubuntu/ansible-config-mgt/
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+ls
+playbooks
+cd playbooks
+ls
+cd
+cd playbooks
+ls
+mv site.yaml site.yml\
+mv site.yaml site.yml
+ls
+clear
+cd
+clear
+cd /home/ubuntu/ansible-config-mgt/
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+clear
+ls
+cd playbooks
+ls
+cd playbooks
+cd
+clear
+ls
+ls -l static-assignments
+cd playbooks
+ls
+sudo cp site.yml /home/ubuntu/ansible-config-mgt
+ls
+cd
+cd ansible-config-mgt
+ls
+cd playbooks
+ls
+cd ..
+ls
+mv site.yml playbooks
+ls
+cd playboks
+ls -l playbooks
+clear
+cd
+las
+ls
+ls -l static-assignments
+ls -l ansible-config-artifact
+cd ansible-config-mgt
+ls
+cd playbooks
+ls
+mv common.yml /home/ubuntu/static-assignments
+ls
+cd
+clear
+cd /home/ubuntu/ansible-config-mgt/
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+clear
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+clear
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+ls
+clear
+ls
+cd ansible-config-mgt
+ls
+cd ansible-config-mgt
+ls
+cd
+ls
+clear
+cd ansible-config-mgt
+ls
+rmdir -R ansible-config-mgt
+rmdir ansible-config-mgt
+ls
+clear
+cd pplaybooks
+cd
+ls
+cd ansible-config-mgt
+ls
+ansible-playbook -i inventory/dev.yml playbooks/site.yaml
+pwd
+ls
+cd playbooks
+ls
+cd
+cd ansible-config-mgt
+clear
+ls
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+cd 
+ls
+cd static-assignments
+ls
+cd
+cd ansible-config-mgt
+ls
+cd playbooks
+ls
+sudo vi site.yml
+clear
+cd
+ls
+cd ansible-config-mgt
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+clear
+ls
+cd
+ls
+mv static-assignments /home/ubuntu/ansible-config-mgt
+ls
+cd ansible-config-mgt
+ls
+clear
+ls
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+cd playbooks
+ls
+sudo vi site.yml
+clear
+sudo vi site.yml
+cd ..
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+exit
+clear
+chmod 700 ~/.ssh
+cd ~/.ssh/authorized_keys
+sudo vi ~/.ssh/authorized_keys
+exit
+clear
+cd ~/.ssh
+ls -l
+cd known_hosts.old
+sudo vi known_host.old
+sudo vi known_hosts.old
+sudo vi known_hosts
+clear
+ls -l
+vi authorized_keys
+clear
+cd
+chmod 700 ~/.ssh
+cat "Timi keypair.pub" >> ~/.ssh/authorized_keys
+clear
+cd ~/.ssh
+ls
+sudo vi authorized_keys
+sudo systemctl restart sshd
+sudo systemctl restart ssh
+exit
+clear
+ls
+cd ansible-config-mgt
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+exit
+clear
+ssh-add -l
+cd ansible-config-mgt
+ansible-playbook -i inventory/dev.ymlplaybooks/site.yml
+clear
+ansible-playbook -i inventory/dev.yml playbooks/site.yml
+clear
+ssh ec2-user@172.31.33.130
+clear
+ls
+cd tooling
+ls
+cd
+clear
+ls 
+cd ansible-config-artifact
+clear
+ls
+mkdir roles
+ls
+cd roles
+ansible-galaxy init webserver
+ls
+cd webservers
+cd webserver
+clear
+ls -lrt
+rm -R files test vars
+rm -R files tests vars
+clear
+ls
+ls -ltr
+cd
+clear
+ls
+cd ansible-config-mgt
+ls
+cd inventory
+ls
+sudo vi uat.yml
+clear
+cd
+ls
+clear
+ansible-config-mgt/inventory/uat.yml
+sudo vi ansible-config-mgt/inventory/uat.yml
+clear
+ssh-add -l
+exit
+clear
+vi /etc/ansible/ansible.cfg
+sudo vi /etc/ansible/ansible.cfg
+clear
+ls
+sudo nano /etc/ansible/ansible.cfg
+clear
+sudo nano /etc/ansible.cfg
+clear
+ls
+cd ansible-config-mgt
+ls -a
+vi /etc/ansible/ansible.cfg
+clear
+ls
+cd ansible-config-artifact
+ls
+cd roles
+ls
+cd webserver
+ls
+cd
+ls -l /etc/ansible.cfg
+cd /etc
+ls
+ls | grep ansible
+sudo nano ansible.cfg
+clear
+ls
+cd
+clear
+ls
+cd ansible-config-artifact
+ls
+cd roles
+ls
+ls /etc
+clear
+ls -l .cfg
+cd
+cd /etc
+ls -l .cfg
+ls
+cd
+cd ansible-config-artifact
+ls
+cd roles
+ls
+cd webserver
+ls
+ls  ltr
+ls  -ltr
+cd tasks
+ls
+sudo vi main.yml
+cd tasksclear
+clear
+sudo vi main.yml
+cd
+ls
+cd ansible-config-mgt
+ls
+cd static-assignments
+ls
+vi uat-webservers.yml
+cat uat-webservers.yml
+ls
+cd
+ls
+cd ansible-config-mgt
+ls
+cd playbooks
+ls
+sudo vi site.yml
+cat site.yml
