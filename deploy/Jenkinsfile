@@ -16,7 +16,7 @@ pipeline {
 
         stage('Checkout SCM') {
             steps {
-                git branch: 'main', url: 'https://github.com/Dreyshantel/ansible-config-mgt.git'
+                git branch: 'main', url: 'https://github.com/francdomain/ansible-config-mgt.git'
             }
         }
 
@@ -64,15 +64,6 @@ pipeline {
         stage('Clean Workspace after build') {
             steps {
                 cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
-            }
-        }
-
-          
-        stage('Clean up') {
-            steps {
-                script {
-                    sh 'echo "Cleaning up Stage"'
-                }
             }
         }
     }
