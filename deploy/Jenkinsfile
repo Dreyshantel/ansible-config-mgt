@@ -9,21 +9,21 @@ pipeline {
         stage('Initial cleanup') {
             steps {
                 dir("${WORKSPACE}") {
-                    deleteDir()
+                    deleteDir()  // Clean the workspace to avoid using old files
                 }
             }
         }
 
         stage('Checkout SCM') {
             steps {
-                git branch: 'main', url: 'https://github.com/francdomain/ansible-config-mgt.git'
+                git branch: 'main', url: 'https://github.com/Dreyshantel/ansible-config-mgt.git'
             }
         }
 
         stage('Prepare Ansible For Execution') {
             steps {
-                sh 'echo ${WORKSPACE}'
-                sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg'
+                sh 'echo ${WORKSPACE}'  // Verify workspace path
+                sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg'  // Dynamically set roles path
             }
         }
 
@@ -39,7 +39,10 @@ pipeline {
 
                     sshagent(['private-key']) {
                         allHosts.each { host ->
-                            sh "ssh -o StrictHostKeyChecking=no ${host} exit"
+                            // Try to connect and continue even if the connection fails
+                            sh """
+                                ssh -o StrictHostKeyChecking=no ${host} exit || echo "Failed to connect to ${host}, continuing..."
+                            """
                         }
                     }
                 }
