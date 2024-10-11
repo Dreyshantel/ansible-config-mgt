@@ -2,28 +2,35 @@ pipeline {
     agent any
 
     environment {
-        ANSIBLE_CONFIG = "${WORKSPACE}/deploy/ansible.cfg"
+        WORKSPACE = "${env.WORKSPACE}" // Workspace variable
     }
 
     stages {
-        stage('Initial cleanup') {
+        stage('Checkout SCM') {
             steps {
-                dir("${WORKSPACE}") {
-                    deleteDir()  // Clean the workspace to avoid using old files
-                }
+                git branch: 'feature/jenkinspipeline-stages', url: 'https://github.com/Dreyshantel/ansible-config-mgt.git'
             }
         }
 
-        stage('Checkout SCM') {
+        stage('Initial Cleanup') {
             steps {
-                git branch: 'main', url: 'https://github.com/francdomain/ansible-config-mgt.git'
+                dir("${WORKSPACE}") {
+                    deleteDir() // Cleanup the workspace
+                }
             }
         }
 
         stage('Prepare Ansible For Execution') {
             steps {
-                sh 'echo ${WORKSPACE}'  // Verify workspace path
-                sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg'  // Dynamically set roles path
+                sh '''
+                echo "Listing deploy directory contents:"
+                ls -la ${WORKSPACE}/deploy
+                if [ -f "${WORKSPACE}/deploy/ansible.cfg" ]; then
+                    sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg
+                else
+                    echo "ansible.cfg not found, skipping sed command"
+                fi
+                '''
             }
         }
 
@@ -36,10 +43,9 @@ pipeline {
                         'ec2-user@172.31.81.236',
                         'ec2-user@172.31.85.118'
                     ]
-
-                    sshagent(['private-key']) {
+                    
+                    sshagent(['your-correct-credential-id']) {
                         allHosts.each { host ->
-                            // Try to connect and continue even if the connection fails
                             sh """
                                 ssh -o StrictHostKeyChecking=no ${host} exit || echo "Failed to connect to ${host}, continuing..."
                             """
@@ -50,24 +56,20 @@ pipeline {
         }
 
         stage('Run Ansible playbook') {
+            when {
+                expression { fileExists("${WORKSPACE}/deploy/ansible.cfg") }
+            }
             steps {
-                sshagent(['private-key']) {
-                    ansiblePlaybook(
-                        become: true,
-                        credentialsId: 'private-key',
-                        disableHostKeyChecking: true,
-                        installation: 'ansible',
-                        inventory: '${WORKSPACE}/inventory/dev.yml',
-                        playbook: '${WORKSPACE}/playbooks/site.yml'
-                    )
-                }
+                sh '''
+                ansible-playbook -i inventory playbook.yml
+                '''
             }
         }
+    }
 
-        stage('Clean Workspace after build') {
-            steps {
-                cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
-            }
+    post {
+        always {
+            cleanWs() // Clean up the workspace after execution
         }
     }
 }
