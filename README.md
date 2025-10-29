@@ -1,3 +1,3 @@
 # ansible-config-mgt
 
-Test Ansible build
+Test Ansible config artifact build
