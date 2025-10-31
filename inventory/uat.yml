@@ -1,0 +1,2 @@
+172.31.2.124 ansible_ssh_user='ec2-user'
+3.147.70.77  ansible_ssh_user='ec2-user'
