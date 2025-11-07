@@ -20,8 +20,26 @@ pipeline {
 
         stage('Prepare Ansible For Execution') {
             steps {
-                sh 'echo "WORKSPACE: ${WORKSPACE}"'
-                sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg || echo "ansible.cfg missing"'
+                sh '''
+                    echo "WORKSPACE: ${WORKSPACE}"
+
+                    # Verify ansible.cfg exists
+                    if [ -f "${WORKSPACE}/deploy/ansible.cfg" ]; then
+                        echo "Found ansible.cfg — ensuring roles_path is correct..."
+
+                        # If roles_path exists, update it; if not, add it
+                        if grep -q "^roles_path=" "${WORKSPACE}/deploy/ansible.cfg"; then
+                            sed -i "s|^roles_path=.*|roles_path=${WORKSPACE}/roles|" "${WORKSPACE}/deploy/ansible.cfg"
+                        else
+                            sed -i "3 a roles_path=${WORKSPACE}/roles" "${WORKSPACE}/deploy/ansible.cfg"
+                        fi
+
+                        echo "Updated ansible.cfg:"
+                        cat "${WORKSPACE}/deploy/ansible.cfg"
+                    else
+                        echo "ansible.cfg missing — please check your repo structure"
+                    fi
+                '''
             }
         }
 
@@ -60,7 +78,7 @@ pipeline {
 
         stage('Clean Workspace after build') {
             steps {
-                cleanWs()
+                cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
             }
         }
     }
