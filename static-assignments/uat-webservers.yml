@@ -1,4 +1,4 @@
 ---
-- hosts: tooling
+- hosts: uat-webservers
   roles:
-     - tooling
+     - webservers
