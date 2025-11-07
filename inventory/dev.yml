@@ -1,20 +1,16 @@
-all:
-  children:
-    nfs:
-      hosts:
-        172.31.2.191:
-          ansible_ssh_user: ec2-user
-    webservers:
-      hosts:
-        172.31.2.109:
-          ansible_ssh_user: ec2-user
-        172.31.2.111:
-          ansible_ssh_user: ec2-user
-    db:
-      hosts:
-        172.31.2.188:
-          ansible_ssh_user: ec2-user
-    lb:
-      hosts:
-        172.31.2.9:
-          ansible_ssh_user: ubuntu
+[Nginx]
+Nginx ansible_host=172.31.2.9 ansible_ssh_user='ubuntu'
+
+[tooling]
+web1 ansible_host=172.31.2.109 ansible_ssh_user='ec2-user'
+web2 ansible_host=172.31.2.111 ansible_ssh_user='ec2-user'
+
+# [todo]
+# <Todo-web-server-private-IP-Address>
+
+# [db:vars]
+# ansible_user=ec2-user
+# ansible_python_interpreter=/usr/bin/python
+
+[db]
+Database ansible_host=172.31.2.188 ansible_ssh_user='ec2-user'
