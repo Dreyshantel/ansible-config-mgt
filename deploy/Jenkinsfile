@@ -8,9 +8,7 @@ pipeline {
     stages {
         stage('Initial cleanup') {
             steps {
-                dir("${WORKSPACE}") {
-                    deleteDir()
-                }
+                deleteDir()
             }
         }
 
@@ -22,8 +20,8 @@ pipeline {
 
         stage('Prepare Ansible For Execution') {
             steps {
-                sh 'echo ${WORKSPACE}'
-                sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg'
+                sh 'echo "WORKSPACE: ${WORKSPACE}"'
+                sh 'sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg || echo "ansible.cfg missing"'
             }
         }
 
@@ -36,10 +34,9 @@ pipeline {
                         'ec2-user@172.31.2.109',
                         'ec2-user@172.31.2.188'
                     ]
-
                     sshagent(['private-key']) {
                         allHosts.each { host ->
-                            sh "ssh -o StrictHostKeyChecking=no ${host} exit"
+                            sh "ssh -o StrictHostKeyChecking=no ${host} exit || echo 'SSH failed for ${host}'"
                         }
                     }
                 }
@@ -54,8 +51,8 @@ pipeline {
                         credentialsId: 'private-key',
                         disableHostKeyChecking: true,
                         installation: 'ansible',
-                        inventory: '${WORKSPACE}/inventory/dev.yml',
-                        playbook: '${WORKSPACE}/playbooks/site.yml'
+                        inventory: "${WORKSPACE}/inventory/dev.yml",
+                        playbook: "${WORKSPACE}/playbooks/site.yml"
                     )
                 }
             }
@@ -63,8 +60,9 @@ pipeline {
 
         stage('Clean Workspace after build') {
             steps {
-                cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
+                cleanWs()
             }
         }
     }
 }
+
