@@ -1,7 +1,10 @@
 ---
-- name: Ensure MySQL packages are installed.
-  ansible.builtin.yum:
-    name: "{{ mysql_packages }}"
-    state: present
-    enablerepo: "{{ mysql_enablerepo | default(omit, true) }}"
-  register: rh_mysql_install_packages
+- name: Check MySQL version
+  command: "{{ mysql_bin }} --version"
+  register: mysql_version
+  become: yes
+
+- name: Debug MySQL version
+  debug:
+    msg: "MySQL version: {{ mysql_version.stdout }}"
+
