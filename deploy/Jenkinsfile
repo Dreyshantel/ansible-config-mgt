@@ -4,12 +4,14 @@ pipeline {
     environment {
         ANSIBLE_CONFIG = "${WORKSPACE}/deploy/ansible.cfg"
     }
+
     parameters {
-        string(name: 'inventory', defaultValue: 'dev',  description: 'This is the inventory file for the environment to deploy configuration')
+        string(name: 'inventory', defaultValue: 'dev', description: 'Inventory file for environment')
         string(name: 'ansible_tags', defaultValue: 'webserver', description: 'Ansible tags to run specific roles or tasks')
-        }
+    }
 
     stages {
+
         stage('Initial cleanup') {
             steps {
                 deleteDir()
@@ -27,17 +29,13 @@ pipeline {
                 sh '''
                     echo "WORKSPACE: ${WORKSPACE}"
 
-                    # Verify ansible.cfg exists
                     if [ -f "${WORKSPACE}/deploy/ansible.cfg" ]; then
                         echo "Found ansible.cfg — ensuring roles_path is correct..."
-
-                        # If roles_path exists, update it; if not, add it
                         if grep -q "^roles_path=" "${WORKSPACE}/deploy/ansible.cfg"; then
-                            sed -i "s|^roles_path=.*|roles_path=${WORKSPACE}/roles|" "${WORKSPACE}/deploy/ansible.cfg"    
+                            sed -i "s|^roles_path=.*|roles_path=${WORKSPACE}/roles|" "${WORKSPACE}/deploy/ansible.cfg"
                         else
                             sed -i "3 a roles_path=${WORKSPACE}/roles" "${WORKSPACE}/deploy/ansible.cfg"
                         fi
-
                         echo "Updated ansible.cfg:"
                         cat "${WORKSPACE}/deploy/ansible.cfg"
                     else
@@ -62,23 +60,20 @@ pipeline {
                         }
                     }
                 }
-
             }
         }
 
         stage('Run Ansible playbook') {
             steps {
-pipeline {
                 sshagent(['private-key']) {
                     ansiblePlaybook(
                         become: true,
-pipeline {
                         credentialsId: 'private-key',
                         disableHostKeyChecking: true,
                         installation: 'ansible',
                         inventory: "${WORKSPACE}/inventory/${inventory}",
-                        playbook: "${WORKSPACE}/playbooks/site.yml"
-                        tags: "${ansible_tag}"
+                        playbook: "${WORKSPACE}/playbooks/site.yml",
+                        tags: "${ansible_tags}"
                     )
                 }
             }
@@ -86,8 +81,13 @@ pipeline {
 
         stage('Clean Workspace after build') {
             steps {
-                cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, 
-deleteDirs: true)
+                cleanWs(
+                    cleanWhenAborted: true,
+                    cleanWhenFailure: true,
+                    cleanWhenNotBuilt: true,
+                    cleanWhenUnstable: true,
+                    deleteDirs: true
+                )
             }
         }
     }
