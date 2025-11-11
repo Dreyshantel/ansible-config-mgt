@@ -11,30 +11,42 @@ pipeline {
         string(name: 'repo_url', defaultValue: 'https://github.com/Dreyshante/ansible-config-mgt.git', description: 'Repository URL')
         text(name: 'ssh_hosts', defaultValue: 'ec2-user@172.31.2.188\nec2-user@172.31.2.111\nec2-user@172.31.2.109\nubuntu@172.31.2.9', description: 'List of SSH hosts, one per line')
         string(name: 'playbook_path', defaultValue: '${WORKSPACE}/playbooks/site.yml', description: 'Path to the Ansible playbook')
-        string(name: 'credentials_id', defaultValue: 'private-key', description: 'Credentials ID for SSH and Ansible')
+        string(name: 'credentials_id', defaultValue: 'private-key', description: 'Credentials ID for SSH and Ansible')    
     }
 
     stages {
+
         stage('Initial cleanup') {
             steps {
-                dir("${WORKSPACE}") {
-                    deleteDir()
-                }
+                deleteDir()
             }
         }
 
         stage('Checkout SCM') {
             steps {
-                git branch: "${params.branch}", url: "${params.repo_url}"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "*/${params.branch}"]],
+                    userRemoteConfigs: [[
+                        url: "${params.repo_url}",
+                        credentialsId: 'GitHub-credentials'
+                    ]]
+                ])
             }
         }
 
         stage('Prepare Ansible For Execution') {
             steps {
-                sh "echo WORKSPACE: ${WORKSPACE}"
-                sh """
-                sed -i '3 a roles_path=${WORKSPACE}/roles' ${WORKSPACE}/deploy/ansible.cfg
-                """
+                sh '''
+                    echo "WORKSPACE: ${WORKSPACE}"
+                    if [ -f "${WORKSPACE}/deploy/ansible.cfg" ]; then
+                        echo "Found ansible.cfg — updating roles_path..."
+                        sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg
+                    else
+                        echo "ansible.cfg not found!"
+                        exit 1
+                    fi
+                '''
             }
         }
 
@@ -60,7 +72,7 @@ pipeline {
                         disableHostKeyChecking: true,
                         installation: 'ansible',
                         inventory: "${WORKSPACE}/inventory/${params.inventory}",
-                        playbook: params.playbook_path
+                        playbook: "${WORKSPACE}/playbooks/site.yml"
                     )
                 }
             }
@@ -68,8 +80,10 @@ pipeline {
 
         stage('Clean Workspace after build') {
             steps {
-                cleanWs(cleanWhenAborted: true, cleanWhenFailure: true,
-                        cleanWhenNotBuilt: true, cleanWhenUnstable: true,
+                cleanWs(cleanWhenAborted: true, 
+                        cleanWhenFailure: true,
+                        cleanWhenNotBuilt: true, 
+                        cleanWhenUnstable: true,
                         deleteDirs: true)
             }
         }
@@ -77,6 +91,7 @@ pipeline {
 
     post {
         always {
+            echo 'Final cleanup after build...'
             cleanWs(deleteDirs: true)
         }
     }
