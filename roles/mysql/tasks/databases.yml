@@ -6,4 +6,6 @@
     encoding: "{{ item.encoding | default('utf8') }}"
     state: "{{ item.state | default('present') }}"
     target: "{{ item.target | default(omit) }}"
-  with_items: "{{ mysql_databases }}"
+    login_user: "{{ mysql_root_username }}"        
+    login_password: "{{ mysql_root_password }}"
+  loop: "{{ mysql_databases }}"
