@@ -1,4 +1,4 @@
-mysql_root_password: ""
+mysql_root_password: "$077Timzy2557!"
 mysql_databases:
   - name: tooling
     encoding: utf8
@@ -7,4 +7,4 @@ mysql_users:
   - name: webaccess
     host: " 172.31.2.0/24" # Webserver subnet cidr
     password: Admin123$
-    priv: "tooling.*:ALL"
+    priv: "tooling.*:ALL,GRANT"
