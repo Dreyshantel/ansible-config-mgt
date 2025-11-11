@@ -6,7 +6,8 @@ pipeline {
     }
     parameters {
         string(name: 'inventory', defaultValue: 'dev',  description: 'This is the inventory file for the environment to deploy configuration')
-    }
+        string(name: 'ansible_tags', defaultValue: 'webserver', description: 'Ansible tags to run specific roles or tasks')
+        }
 
     stages {
         stage('Initial cleanup') {
@@ -32,7 +33,7 @@ pipeline {
 
                         # If roles_path exists, update it; if not, add it
                         if grep -q "^roles_path=" "${WORKSPACE}/deploy/ansible.cfg"; then
-                            sed -i "s|^roles_path=.*|roles_path=${WORKSPACE}/roles|" "${WORKSPACE}/deploy/ansible.cfg"
+                            sed -i "s|^roles_path=.*|roles_path=${WORKSPACE}/roles|" "${WORKSPACE}/deploy/ansible.cfg"    
                         else
                             sed -i "3 a roles_path=${WORKSPACE}/roles" "${WORKSPACE}/deploy/ansible.cfg"
                         fi
@@ -61,19 +62,23 @@ pipeline {
                         }
                     }
                 }
+---
             }
         }
 
         stage('Run Ansible playbook') {
             steps {
+pipeline {
                 sshagent(['private-key']) {
                     ansiblePlaybook(
                         become: true,
+pipeline {
                         credentialsId: 'private-key',
                         disableHostKeyChecking: true,
                         installation: 'ansible',
                         inventory: "${WORKSPACE}/inventory/${inventory}",
                         playbook: "${WORKSPACE}/playbooks/site.yml"
+                        tags: "${ansible_tag}"
                     )
                 }
             }
@@ -81,7 +86,8 @@ pipeline {
 
         stage('Clean Workspace after build') {
             steps {
-                cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, deleteDirs: true)
+                cleanWs(cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenNotBuilt: true, cleanWhenUnstable: true, 
+deleteDirs: true)
             }
         }
     }
