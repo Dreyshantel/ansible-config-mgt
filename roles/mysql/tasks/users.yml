@@ -1,5 +1,4 @@
 ---
----
 - name: Ensure MySQL users are present.
   community.mysql.mysql_user:
     name: "{{ item.name }}"
@@ -16,5 +15,5 @@
   with_items: "{{ mysql_users }}"
   become: true
   no_log: "{{ mysql_hide_passwords }}"
-
+  when: skip_mysql_users is not defined
 
