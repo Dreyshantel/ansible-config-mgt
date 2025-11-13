@@ -1,4 +1,11 @@
 ---
+# ===============================================
+# JFrog Artifactory Installation Playbook
+# ===============================================
+# This playbook installs JFrog Artifactory OSS
+# on Ubuntu systems with proper GPG key handling
+# ===============================================
+
 # -------------------------------
 # 0. Cleanup old JFrog repo files
 # -------------------------------
@@ -44,24 +51,38 @@
   command: java -version
   register: java_version
   ignore_errors: yes
+  changed_when: false
 
-- debug:
+- name: Display Java version
+  debug:
     var: java_version.stderr_lines
 
 # -------------------------------
-# 3. Add JFrog GPG key and repository
+# 3. Add JFrog GPG key and repository (FIXED)
 # -------------------------------
-- name: Download JFrog GPG key (non-interactive)
-  ansible.builtin.get_url:
-    url: https://releases.jfrog.io/artifactory/api/gpg/key/public
-    dest: /usr/share/keyrings/jfrog-archive-keyring.gpg
-    mode: '0644'
+- name: Download and import JFrog GPG key
+  ansible.builtin.shell: |
+    curl -fsSL https://releases.jfrog.io/artifactory/api/gpg/key/public | \
+    gpg --dearmor -o /usr/share/keyrings/jfrog-archive-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/jfrog-archive-keyring.gpg
   become: yes
 
-- name: Add JFrog repository (Xenial, works on 22.04)
+- name: Verify GPG key was created
+  stat:
+    path: /usr/share/keyrings/jfrog-archive-keyring.gpg
+  register: gpg_key_stat
+  become: yes
+
+- name: Display GPG key status
+  debug:
+    msg: "GPG key exists: {{ gpg_key_stat.stat.exists }}"
+
+- name: Add JFrog repository with signed-by directive
   ansible.builtin.copy:
     content: "deb [signed-by=/usr/share/keyrings/jfrog-archive-keyring.gpg] https://releases.jfrog.io/artifactory/artifactory-debs xenial main"
     dest: /etc/apt/sources.list.d/jfrog.list
+    mode: '0644'
   become: yes
 
 - name: Update the repository cache after adding Artifactory repository
@@ -76,6 +97,7 @@
   apt:
     name: jfrog-artifactory-oss
     state: present
+    update_cache: yes
   become: yes
 
 - name: Start and enable JFrog Artifactory service
@@ -85,13 +107,19 @@
     enabled: yes
   become: yes
 
+- name: Wait for Artifactory service to be fully started
+  pause:
+    seconds: 30
+
 - name: Verify the status of JFrog Artifactory
   command: systemctl status artifactory.service
   register: artifactory_status
   ignore_errors: yes
+  changed_when: false
   become: yes
 
-- debug:
+- name: Display Artifactory service status
+  debug:
     var: artifactory_status.stdout_lines
 
 # -------------------------------
@@ -101,5 +129,28 @@
   file:
     path: /opt/jfrog/artifactory/var/etc/system.yaml
     state: touch
+    mode: '0644'
   become: yes
 
+# -------------------------------
+# 6. Final verification
+# -------------------------------
+- name: Check if Artifactory is listening on port 8082
+  wait_for:
+    port: 8082
+    host: 0.0.0.0
+    timeout: 300
+    msg: "Artifactory did not start on port 8082"
+  ignore_errors: yes
+
+- name: Display completion message
+  debug:
+    msg: 
+      - "=========================================="
+      - "JFrog Artifactory Installation Complete!"
+      - "=========================================="
+      - "Access Artifactory at: http://{{ ansible_default_ipv4.address }}:8082"
+      - "Default credentials:"
+      - "  Username: admin"
+      - "  Password: password"
+      - "=========================================="
