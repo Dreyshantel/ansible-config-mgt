@@ -2,6 +2,21 @@
 # tasks file for artifactory
 
 # -------------------------------
+# 0. Install essential packages
+# -------------------------------
+
+- name: Install essential packages for APT and HTTPS
+  apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+      - ca-certificates
+    state: present
+    update_cache: yes
+  become: yes
+
+# -------------------------------
 # 1. System update & Java installation
 # -------------------------------
 
