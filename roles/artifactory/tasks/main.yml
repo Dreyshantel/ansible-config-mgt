@@ -2,9 +2,8 @@
 # tasks file for artifactory
 
 # -------------------------------
-# 0. Install essential packages
+# 0. Install essential packages for APT and HTTPS
 # -------------------------------
-
 - name: Install essential packages for APT and HTTPS
   apt:
     name:
@@ -19,7 +18,6 @@
 # -------------------------------
 # 1. System update & Java installation
 # -------------------------------
-
 - name: Update and upgrade Ubuntu
   apt:
     update_cache: yes
@@ -43,7 +41,6 @@
 # -------------------------------
 # 2. Add JFrog GPG key and repository
 # -------------------------------
-
 - name: Download JFrog GPG key (non-interactive)
   ansible.builtin.get_url:
     url: https://releases.jfrog.io/artifactory/api/gpg/key/public
@@ -51,9 +48,9 @@
     mode: '0644'
   become: yes
 
-- name: Add JFrog repository to APT
+- name: Add JFrog repository for Ubuntu 22.04
   ansible.builtin.copy:
-    content: "deb [signed-by=/usr/share/keyrings/jfrog-public.gpg] https://releases.jfrog.io/artifactory/artifactory-debs focal main"
+    content: "deb [signed-by=/usr/share/keyrings/jfrog-public.gpg] https://releases.jfrog.io/artifactory/artifactory-debs jammy main"
     dest: /etc/apt/sources.list.d/artifactory.list
   become: yes
 
@@ -65,7 +62,6 @@
 # -------------------------------
 # 3. Install Artifactory
 # -------------------------------
-
 - name: Install JFrog Artifactory
   apt:
     name: jfrog-artifactory-oss
@@ -91,7 +87,6 @@
 # -------------------------------
 # 4. Ensure system.yaml exists
 # -------------------------------
-
 - name: Ensure the system.yaml file exists
   file:
     path: /opt/jfrog/artifactory/var/etc/system.yaml
