@@ -64,7 +64,7 @@
     dest: /etc/apt/sources.list.d/jfrog.list
   become: yes
 
-- name: Update the repository cache
+- name: Update the repository cache after adding Artifactory repository
   ansible.builtin.apt:
     update_cache: yes
   become: yes
