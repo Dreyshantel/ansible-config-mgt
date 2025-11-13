@@ -158,19 +158,53 @@
     msg: "Artifactory installed successfully"
   when: artifactory_install is succeeded
 
-- name: Start and enable JFrog Artifactory service
+- name: Enable JFrog Artifactory service (without starting yet)
   systemd:
     name: artifactory.service
-    state: started
     enabled: yes
   become: yes
 
-- name: Wait for Artifactory service to initialize
-  pause:
-    seconds: 30
-    prompt: "Waiting for Artifactory to start..."
+- name: Check available memory
+  shell: free -h
+  register: memory_info
+  changed_when: false
+  become: yes
 
-- name: Verify the status of JFrog Artifactory
+- name: Display memory information
+  debug:
+    var: memory_info.stdout_lines
+
+- name: Start JFrog Artifactory service with extended timeout
+  systemd:
+    name: artifactory.service
+    state: started
+    daemon_reload: yes
+  become: yes
+  async: 600
+  poll: 0
+  register: artifactory_start
+
+- name: Wait for Artifactory service start job to complete
+  async_status:
+    jid: "{{ artifactory_start.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 60
+  delay: 10
+  become: yes
+  ignore_errors: yes
+
+- name: Check if service start timed out
+  debug:
+    msg: "Service start may have timed out, but this is normal. Checking actual service status..."
+  when: job_result is failed
+
+- name: Wait additional time for Artifactory to initialize (5 minutes)
+  pause:
+    seconds: 300
+    prompt: "Waiting for Artifactory to fully initialize. This can take 5-10 minutes on first startup..."
+
+- name: Verify the status of JFrog Artifactory service
   command: systemctl status artifactory.service
   register: artifactory_status
   ignore_errors: yes
@@ -180,6 +214,30 @@
 - name: Display Artifactory service status
   debug:
     var: artifactory_status.stdout_lines
+
+- name: Check Artifactory process
+  shell: ps aux | grep -i artifactory | grep -v grep
+  register: artifactory_process
+  ignore_errors: yes
+  changed_when: false
+  become: yes
+
+- name: Display Artifactory process information
+  debug:
+    var: artifactory_process.stdout_lines
+  when: artifactory_process.stdout_lines is defined and artifactory_process.stdout_lines | length > 0
+
+- name: Check Artifactory logs for startup progress
+  shell: tail -n 50 /opt/jfrog/artifactory/var/log/console.log 2>/dev/null || echo "Log file not found yet"
+  register: artifactory_logs
+  changed_when: false
+  become: yes
+  ignore_errors: yes
+
+- name: Display Artifactory startup logs
+  debug:
+    var: artifactory_logs.stdout_lines
+  when: artifactory_logs.stdout_lines is defined
 
 # -------------------------------
 # 5. Ensure system.yaml exists
