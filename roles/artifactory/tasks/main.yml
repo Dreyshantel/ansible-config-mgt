@@ -1,6 +1,10 @@
 ---
 # tasks file for artifactory
 
+# -------------------------------
+# 1. System update & Java installation
+# -------------------------------
+
 - name: Update and upgrade Ubuntu
   apt:
     update_cache: yes
@@ -22,7 +26,7 @@
     var: java_version.stderr_lines
 
 # -------------------------------
-# Add JFrog GPG key and repository
+# 2. Add JFrog GPG key and repository
 # -------------------------------
 
 - name: Download JFrog GPG key (non-interactive)
@@ -34,7 +38,7 @@
 
 - name: Add JFrog repository to APT
   ansible.builtin.copy:
-    content: "deb [signed-by=/usr/share/keyrings/jfrog-public.gpg] https://releases.jfrog.io/artifactory/artifactory-debs xenial main"
+    content: "deb [signed-by=/usr/share/keyrings/jfrog-public.gpg] https://releases.jfrog.io/artifactory/artifactory-debs focal main"
     dest: /etc/apt/sources.list.d/artifactory.list
   become: yes
 
@@ -44,7 +48,7 @@
   become: yes
 
 # -------------------------------
-# Install Artifactory
+# 3. Install Artifactory
 # -------------------------------
 
 - name: Install JFrog Artifactory
@@ -70,7 +74,7 @@
     var: artifactory_status.stdout_lines
 
 # -------------------------------
-# Ensure system.yaml exists
+# 4. Ensure system.yaml exists
 # -------------------------------
 
 - name: Ensure the system.yaml file exists
