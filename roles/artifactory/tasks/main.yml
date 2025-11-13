@@ -1,7 +1,6 @@
-
-# tasks file for artifactory
-# tasks/main.yml
 ---
+# tasks file for artifactory
+
 - name: Update and upgrade Ubuntu
   apt:
     update_cache: yes
@@ -22,14 +21,21 @@
 - debug:
     var: java_version.stderr_lines
 
-- name: Add JFrog GPG key
-  ansible.builtin.shell: |
-    curl -fsSL https://releases.jfrog.io/artifactory/api/gpg/key/public | gpg --dearmor -o /usr/share/keyrings/jfrog-public.gpg
+# -------------------------------
+# Add JFrog GPG key and repository
+# -------------------------------
+
+- name: Download JFrog GPG key (non-interactive)
+  ansible.builtin.get_url:
+    url: https://releases.jfrog.io/artifactory/api/gpg/key/public
+    dest: /usr/share/keyrings/jfrog-public.gpg
+    mode: '0644'
   become: yes
 
 - name: Add JFrog repository to APT
-  ansible.builtin.shell: |
-    echo "deb [signed-by=/usr/share/keyrings/jfrog-public.gpg] https://releases.jfrog.io/artifactory/artifactory-debs xenial main" | tee /etc/apt/sources.list.d/artifactory.list
+  ansible.builtin.copy:
+    content: "deb [signed-by=/usr/share/keyrings/jfrog-public.gpg] https://releases.jfrog.io/artifactory/artifactory-debs xenial main"
+    dest: /etc/apt/sources.list.d/artifactory.list
   become: yes
 
 - name: Update the repository cache after adding Artifactory repository
@@ -37,8 +43,12 @@
     update_cache: yes
   become: yes
 
+# -------------------------------
+# Install Artifactory
+# -------------------------------
+
 - name: Install JFrog Artifactory
-  ansible.builtin.apt:
+  apt:
     name: jfrog-artifactory-oss
     state: present
   become: yes
@@ -59,15 +69,13 @@
 - debug:
     var: artifactory_status.stdout_lines
 
+# -------------------------------
+# Ensure system.yaml exists
+# -------------------------------
+
 - name: Ensure the system.yaml file exists
   file:
     path: /opt/jfrog/artifactory/var/etc/system.yaml
     state: touch
   become: yes
-
-# Add any additional tasks below
-# - name: <task name>
-#   <module>:
-#     <parameters>
-#   become: yes
 
