@@ -1,155 +1,149 @@
 ---
 # ===============================================
-# JFrog Artifactory Installation with PostgreSQL
+# Artifactory Installation Role Tasks
 # ===============================================
 
-- name: "Artifactory Installation Playbook"
-  hosts: artifactory
-  become: yes
-  vars:
-    artifactory_db_name: artifactory
-    artifactory_db_user: artifactory
-    artifactory_db_password: "Password"
-    artifactory_home: /opt/jfrog/artifactory
-    artifactory_version: jfrog-artifactory-oss
+# -------------------------------
+# 1. Stop and remove old Artifactory
+# -------------------------------
+- name: Stop old Artifactory service if exists
+  systemd:
+    name: artifactory
+    state: stopped
+  ignore_errors: yes
 
-  tasks:
+- name: Remove old Artifactory directory
+  file:
+    path: "{{ artifactory_home }}"
+    state: absent
+  ignore_errors: yes
 
-  # -------------------------------
-  # 1. Stop and remove old Artifactory
-  # -------------------------------
-  - name: Stop old Artifactory service if exists
-    systemd:
-      name: artifactory
-      state: stopped
-    ignore_errors: yes
+- name: Remove old systemd service
+  file:
+    path: /etc/systemd/system/artifactory.service
+    state: absent
+  ignore_errors: yes
 
-  - name: Remove old Artifactory directory
-    file:
-      path: "{{ artifactory_home }}"
-      state: absent
-    ignore_errors: yes
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
 
-  - name: Remove old systemd service
-    file:
-      path: /etc/systemd/system/artifactory.service
-      state: absent
-    ignore_errors: yes
+# -------------------------------
+# 2. Install required packages
+# -------------------------------
+- name: Install essential packages
+  apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+      - postgresql
+      - openjdk-17-jdk
+    state: present
+    update_cache: yes
 
-  - name: Reload systemd daemon
-    systemd:
-      daemon_reload: yes
+- name: Ensure PostgreSQL service is started
+  systemd:
+    name: postgresql
+    state: started
+    enabled: yes
 
-  # -------------------------------
-  # 2. Install required packages
-  # -------------------------------
-  - name: Install essential packages
-    apt:
-      name:
-        - curl
-        - gnupg
-        - apt-transport-https
-        - ca-certificates
-        - software-properties-common
-        - postgresql
-        - openjdk-17-jdk
-      state: present
-      update_cache: yes
+# -------------------------------
+# 3. Create PostgreSQL user and DB
+# -------------------------------
+- name: Ensure PostgreSQL user exists
+  community.postgresql.postgresql_user:
+    name: "{{ artifactory_db_user }}"
+    password: "{{ artifactory_db_password | password_hash('sha512') }}"
+    state: present
+  become_user: postgres
 
-  - name: Ensure PostgreSQL service is started
-    systemd:
-      name: postgresql
-      state: started
-      enabled: yes
+- name: Ensure PostgreSQL database exists
+  community.postgresql.postgresql_db:
+    name: "{{ artifactory_db_name }}"
+    owner: "{{ artifactory_db_user }}"
+    encoding: UTF8
+    state: present
+  become_user: postgres
 
-  # -------------------------------
-  # 3. Create PostgreSQL user and DB
-  # -------------------------------
-  - name: Ensure PostgreSQL user exists
-    community.postgresql.postgresql_user:
-      name: "{{ artifactory_db_user }}"
-      password: "{{ artifactory_db_password | password_hash('sha512') }}"
-      state: present
-    become_user: postgres
+# -------------------------------
+# 4. Add JFrog repository and GPG key
+# -------------------------------
+- name: Download JFrog GPG key
+  ansible.builtin.get_url:
+    url: https://releases.jfrog.io/artifactory/api/gpg/key/public
+    dest: /usr/share/keyrings/jfrog-archive-keyring.gpg
+    mode: '0644'
 
-  - name: Ensure PostgreSQL database exists
-    community.postgresql.postgresql_db:
-      name: "{{ artifactory_db_name }}"
-      owner: "{{ artifactory_db_user }}"
-      encoding: UTF8
-      state: present
-    become_user: postgres
+- name: Add JFrog repository
+  ansible.builtin.copy:
+    content: "deb [signed-by=/usr/share/keyrings/jfrog-archive-keyring.gpg] https://releases.jfrog.io/artifactory/artifactory-debs xenial main"
+    dest: /etc/apt/sources.list.d/jfrog.list
+    mode: '0644'
 
-  # -------------------------------
-  # 4. Add JFrog repository and GPG key
-  # -------------------------------
-  - name: Download JFrog GPG key
-    ansible.builtin.get_url:
-      url: https://releases.jfrog.io/artifactory/api/gpg/key/public
-      dest: /usr/share/keyrings/jfrog-archive-keyring.gpg
-      mode: '0644'
+- name: Update apt cache
+  apt:
+    update_cache: yes
 
-  - name: Add JFrog repository
-    ansible.builtin.copy:
-      content: "deb [signed-by=/usr/share/keyrings/jfrog-archive-keyring.gpg] https://releases.jfrog.io/artifactory/artifactory-debs xenial main"
-      dest: /etc/apt/sources.list.d/jfrog.list
-      mode: '0644'
+# -------------------------------
+# 5. Install Artifactory OSS
+# -------------------------------
+- name: Install Artifactory OSS
+  apt:
+    name: "{{ artifactory_version }}"
+    state: present
 
-  - name: Update apt cache
-    apt:
-      update_cache: yes
+- name: Enable Artifactory service
+  systemd:
+    name: artifactory
+    enabled: yes
 
-  # -------------------------------
-  # 5. Install Artifactory OSS
-  # -------------------------------
-  - name: Install Artifactory OSS
-    apt:
-      name: "{{ artifactory_version }}"
-      state: present
+# -------------------------------
+# 6. Configure Artifactory to use PostgreSQL
+# -------------------------------
+- name: Ensure Artifactory etc directory exists
+  file:
+    path: "{{ artifactory_home }}/var/etc"
+    state: directory
+    mode: '0755'
 
-  - name: Enable Artifactory service
-    systemd:
-      name: artifactory
-      enabled: yes
+- name: Configure PostgreSQL for Artifactory
+  copy:
+    dest: "{{ artifactory_home }}/var/etc/system.yaml"
+    content: |
+      shared:
+        database:
+          type: postgresql
+          driver: org.postgresql.Driver
+          url: jdbc:postgresql://localhost:5432/{{ artifactory_db_name }}
+          username: {{ artifactory_db_user }}
+          password: {{ artifactory_db_password }}
 
-  # -------------------------------
-  # 6. Configure Artifactory to use PostgreSQL
-  # -------------------------------
-  - name: Configure PostgreSQL for Artifactory
-    copy:
-      dest: "{{ artifactory_home }}/var/etc/system.yaml"
-      content: |
-        shared:
-          database:
-            type: postgresql
-            driver: org.postgresql.Driver
-            url: jdbc:postgresql://localhost:5432/{{ artifactory_db_name }}
-            username: {{ artifactory_db_user }}
-            password: {{ artifactory_db_password }}
+# -------------------------------
+# 7. Start Artifactory
+# -------------------------------
+- name: Start Artifactory service
+  systemd:
+    name: artifactory
+    state: started
+    daemon_reload: yes
 
-  # -------------------------------
-  # 7. Start Artifactory
-  # -------------------------------
-  - name: Start Artifactory service
-    systemd:
-      name: artifactory
-      state: started
-      daemon_reload: yes
+- name: Wait until Artifactory is listening on port 8081
+  wait_for:
+    host: 0.0.0.0
+    port: 8081
+    timeout: 1200
+    delay: 10
 
-  - name: Wait until Artifactory is listening on port 8081
-    wait_for:
-      host: 0.0.0.0
-      port: 8081
-      timeout: 1200
-      delay: 10
-
-  - name: Display completion message
-    debug:
-      msg: |
-        ===================================================
-        JFrog Artifactory Installation Complete!
-        URL: http://{{ ansible_default_ipv4.address }}:8081
-        Username: admin
-        Password: password
-        ===================================================
+- name: Display completion message
+  debug:
+    msg: |
+      ===================================================
+      JFrog Artifactory Installation Complete!
+      URL: http://{{ ansible_default_ipv4.address }}:8081
+      Username: admin
+      Password: password
+      ===================================================
 
