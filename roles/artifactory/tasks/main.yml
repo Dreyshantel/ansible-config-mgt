@@ -53,13 +53,17 @@
 # -------------------------------
 - name: Create PostgreSQL user if not exists
   shell: |
-    psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='{{ artifactory_db_user }}'" | grep -q 1 || psql -c "CREATE USER {{ artifactory_db_user }} WITH PASSWORD '{{ artifactory_db_password }}' CREATEDB;"
-  become_user: postgres
+    psql -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='{{ artifactory_db_user }}'" | grep -q 1 || \
+    psql -U postgres -c "CREATE USER {{ artifactory_db_user }} WITH PASSWORD '{{ artifactory_db_password }}' CREATEDB;"
+  args:
+    executable: /bin/bash
 
 - name: Create PostgreSQL database if not exists
   shell: |
-    psql -tAc "SELECT 1 FROM pg_database WHERE datname='{{ artifactory_db_name }}'" | grep -q 1 || psql -c "CREATE DATABASE {{ artifactory_db_name }} OWNER {{ artifactory_db_user }};"
-  become_user: postgres
+    psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='{{ artifactory_db_name }}'" | grep -q 1 || \
+    psql -U postgres -c "CREATE DATABASE {{ artifactory_db_name }} OWNER {{ artifactory_db_user }};"
+  args:
+    executable: /bin/bash
 
 # -------------------------------
 # 4. Add JFrog repository and GPG key
