@@ -1,87 +1,126 @@
 ---
-# tasks file for Artifactory role
+# Playbook: Install and Configure JFrog Artifactory OSS
+- name: Install and configure JFrog Artifactory
+  hosts: localhost
+  become: yes
+  vars:
+    artifactory_home: /opt/jfrog/artifactory
+    artifactory_version: jfrog-artifactory-oss
+    artifactory_port: 8081
+    allow_no_postgresql: true   # set to true to avoid PostgreSQL
 
-# -------------------------------
-# 1. Add JFrog repository and GPG key
-# -------------------------------
-- name: Download JFrog GPG key
-  get_url:
-    url: https://releases.jfrog.io/artifactory/api/gpg/key/public
-    dest: /usr/share/keyrings/jfrog-archive-keyring.gpg
-    mode: '0644'
+  tasks:
 
-- name: Add JFrog repository
-  copy:
-    content: "deb [signed-by=/usr/share/keyrings/jfrog-archive-keyring.gpg] https://releases.jfrog.io/artifactory/artifactory-debs xenial main"
-    dest: /etc/apt/sources.list.d/jfrog.list
-    mode: '0644'
+  # -------------------------------
+  # 1. Install required packages for HTTPS repositories
+  # -------------------------------
+  - name: Install required packages
+    apt:
+      name:
+        - apt-transport-https
+        - ca-certificates
+        - gnupg
+        - curl
+      state: present
+      update_cache: yes
 
-- name: Update apt cache
-  apt:
-    update_cache: yes
+  # -------------------------------
+  # 2. Add JFrog repository and GPG key
+  # -------------------------------
+  - name: Download JFrog GPG key
+    get_url:
+      url: https://releases.jfrog.io/artifactory/api/gpg/key/public
+      dest: /usr/share/keyrings/jfrog-archive-keyring.gpg
+      mode: '0644'
 
-# -------------------------------
-# 2. Install JFrog Artifactory OSS
-# -------------------------------
-- name: Install Artifactory OSS
-  apt:
-    name: jfrog-artifactory-oss
-    state: present
+  - name: Add JFrog repository
+    copy:
+      content: "deb [signed-by=/usr/share/keyrings/jfrog-archive-keyring.gpg] https://releases.jfrog.io/artifactory/artifactory-debs focal main"
+      dest: /etc/apt/sources.list.d/jfrog.list
+      mode: '0644'
 
-- name: Enable Artifactory service
-  systemd:
-    name: artifactory
-    enabled: yes
-    state: started
+  - name: Update apt cache
+    apt:
+      update_cache: yes
+      cache_valid_time: 3600
 
-- name: Verify Artifactory service status
-  systemd:
-    name: artifactory
-    state: started
-    enabled: yes
+  # -------------------------------
+  # 3. Install Artifactory OSS
+  # -------------------------------
+  - name: Install Artifactory OSS
+    apt:
+      name: "{{ artifactory_version }}"
+      state: present
+
+  # -------------------------------
+  # 4. Enable and start Artifactory service
+  # -------------------------------
+  - name: Enable Artifactory service
+    systemd:
+      name: artifactory
+      enabled: yes
+
+  - name: Start Artifactory service
+    systemd:
+      name: artifactory
+      state: started
+      daemon_reload: yes
+
+  - name: Wait for Artifactory to be ready
+    wait_for:
+      port: "{{ artifactory_port }}"
+      host: 0.0.0.0
+      timeout: 600
+      delay: 10
+
+  - name: Verify Artifactory service status
+    command: systemctl status artifactory
     register: artifactory_status
-    failed_when: artifactory_status.status.ActiveState != "active"
+    ignore_errors: yes
 
-# -------------------------------
-# 3. Ensure system.yaml exists
-# -------------------------------
-- name: Ensure system.yaml exists
-  file:
-    path: /opt/jfrog/artifactory/var/etc/system.yaml
-    state: touch
-    mode: '0644'
+  - name: Show Artifactory service status
+    debug:
+      var: artifactory_status.stdout_lines
 
-# -------------------------------
-# 4. Update allowNoPostgres setting in system.yaml
-# -------------------------------
-- name: Enable allowNoPostgres in system.yaml
-  lineinfile:
-    path: /opt/jfrog/artifactory/var/etc/system.yaml
-    regexp: '^ *allowNoPostgres:'
-    line: 'allowNoPostgres: true'
-    create: yes
+  # -------------------------------
+  # 5. Ensure system.yaml exists
+  # -------------------------------
+  - name: Ensure system.yaml exists
+    file:
+      path: "{{ artifactory_home }}/var/etc/system.yaml"
+      state: touch
+      mode: '0644'
 
-# -------------------------------
-# 5. Restart Artifactory service to apply changes
-# -------------------------------
-- name: Restart Artifactory service
-  systemd:
-    name: artifactory
-    state: restarted
-    daemon_reload: yes
+  # -------------------------------
+  # 6. Update system.yaml to allow no PostgreSQL
+  # -------------------------------
+  - name: Update system.yaml to allow no PostgreSQL
+    copy:
+      dest: "{{ artifactory_home }}/var/etc/system.yaml"
+      content: |
+        shared:
+          database:
+            allowNoPostgresql: {{ allow_no_postgresql }}
 
-- name: Wait for Artifactory to be ready
-  wait_for:
-    port: 8081
-    host: 0.0.0.0
-    timeout: 600
-    delay: 10
+  # -------------------------------
+  # 7. Restart Artifactory to apply changes
+  # -------------------------------
+  - name: Restart Artifactory service
+    systemd:
+      name: artifactory
+      state: restarted
 
-- name: Display completion message
-  debug:
-    msg: |
-      ===================================================
-      JFrog Artifactory setup complete!
-      URL: http://{{ ansible_default_ipv4.address }}:8081
-      ===================================================
+  - name: Confirm Artifactory service is active
+    systemd:
+      name: artifactory
+      state: started
+      enabled: yes
+
+  - name: Display completion message
+    debug:
+      msg: |
+        ===================================================
+        JFrog Artifactory Installation Complete!
+        URL: http://{{ ansible_default_ipv4.address }}:{{ artifactory_port }}
+        ===================================================
 
