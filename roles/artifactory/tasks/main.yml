@@ -1,9 +1,6 @@
 ---
 # tasks file for Artifactory role
 
-# -------------------------------
-# 1. Stop and remove old Artifactory
-# -------------------------------
 - name: Stop old Artifactory service if exists
   systemd:
     name: artifactory
@@ -26,9 +23,6 @@
   systemd:
     daemon_reload: yes
 
-# -------------------------------
-# 2. Install essential packages
-# -------------------------------
 - name: Install essential packages
   apt:
     name:
@@ -38,7 +32,7 @@
       - ca-certificates
       - software-properties-common
       - postgresql
-      - postgresql-contrib
+      - python3-psycopg2
       - openjdk-17-jdk
     state: present
     update_cache: yes
@@ -49,30 +43,22 @@
     state: started
     enabled: yes
 
-# -------------------------------
-# 3. Create PostgreSQL user and database using modules
-# -------------------------------
 - name: Ensure PostgreSQL user exists
   community.postgresql.postgresql_user:
     name: "{{ artifactory_db_user }}"
     password: "{{ artifactory_db_password }}"
     role_attr_flags: CREATEDB
-    state: present
+    login_user: postgres
   become: yes
-  become_user: postgres
 
 - name: Ensure PostgreSQL database exists
   community.postgresql.postgresql_db:
     name: "{{ artifactory_db_name }}"
     owner: "{{ artifactory_db_user }}"
     encoding: UTF8
-    state: present
+    login_user: postgres
   become: yes
-  become_user: postgres
 
-# -------------------------------
-# 4. Add JFrog repository and GPG key
-# -------------------------------
 - name: Download JFrog GPG key
   get_url:
     url: https://releases.jfrog.io/artifactory/api/gpg/key/public
@@ -89,9 +75,6 @@
   apt:
     update_cache: yes
 
-# -------------------------------
-# 5. Install Artifactory OSS
-# -------------------------------
 - name: Install Artifactory OSS
   apt:
     name: "{{ artifactory_version }}"
@@ -102,9 +85,6 @@
     name: artifactory
     enabled: yes
 
-# -------------------------------
-# 6. Configure Artifactory to use PostgreSQL
-# -------------------------------
 - name: Ensure system.yaml exists
   file:
     path: "{{ artifactory_home }}/var/etc/system.yaml"
@@ -123,9 +103,6 @@
           username: {{ artifactory_db_user }}
           password: {{ artifactory_db_password }}
 
-# -------------------------------
-# 7. Start Artifactory service
-# -------------------------------
 - name: Start Artifactory service
   systemd:
     name: artifactory
