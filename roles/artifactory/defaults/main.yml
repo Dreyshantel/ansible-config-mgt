@@ -1,3 +1,4 @@
+---
  artifactory_home: /opt/jfrog/artifactory
  artifactory_db_name: artifactory
  artifactory_db_user: artifactory
