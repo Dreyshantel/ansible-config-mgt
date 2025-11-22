@@ -1,13 +1,18 @@
+---
+# Root password to set for MySQL
 mysql_root_password: ""
+
+# Databases to create
 mysql_database:
   - name: homestead
     encoding: utf8
     collation: utf8_general_ci
 
+# MySQL users to create
 mysql_users:
   - name: homestead
     host: "%"
     password: "sePret^i1"
     priv: "*.*:ALL"
-    auth_plugin: mysql_native_password   # <-- specify the plugin
+    auth_plugin: mysql_native_password
 
