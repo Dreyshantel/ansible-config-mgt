@@ -1,11 +1,13 @@
-# roles/mysql/vars/main.yml
 mysql_root_password: ""
 mysql_database:
   - name: homestead
     encoding: utf8
-    collation: utf8_genral_cli
+    collation: utf8_general_ci
+
 mysql_users:
   - name: homestead
     host: "%"
-    password: sePret^i1
-    priv: "*.*ALL"
+    password: "sePret^i1"
+    priv: "*.*:ALL"
+    auth_plugin: mysql_native_password   # <-- specify the plugin
+
