@@ -1,8 +1,58 @@
 ---
- artifactory_home: /opt/jfrog/artifactory
- artifactory_db_name: artifactory
- artifactory_db_user: artifactory
- artifactory_db_password: Password
- artifactory_version: jfrog-artifactory-oss
+# JFrog Artifactory Default Variables for Ubuntu
 
-# defaults file for artifactory
+# Artifactory version
+artifactory_version: "7.71.5"
+artifactory_flavour: "oss"  # Options: oss, pro, cpp-ce
+artifactory_home: "/opt/jfrog/artifactory"
+artifactory_user: "artifactory"
+artifactory_group: "artifactory"
+
+# Java configuration
+java_version: "17"  # Ubuntu 22.04+ supports Java 17
+java_package: "openjdk-17-jdk"
+
+# Database configuration
+artifactory_db_type: "postgresql"
+artifactory_db_driver: "org.postgresql.Driver"
+artifactory_db_url: "jdbc:postgresql://localhost:5432/artifactory"
+artifactory_db_username: "artifactory"
+artifactory_db_password: "changeme"
+artifactory_db_max_active_connections: 100
+artifactory_db_max_idle_connections: 10
+
+# PostgreSQL version (Ubuntu specific)
+postgresql_version: "14"  # Ubuntu 22.04 default
+
+# Network configuration
+artifactory_port: 8081
+artifactory_host: "0.0.0.0"
+artifactory_context_path: "artifactory"
+
+# Nginx reverse proxy
+# install_nginx: true
+# nginx_domain: "artifactory.example.com"
+# nginx_ssl: false
+# nginx_ssl_cert_path: "/etc/ssl/certs/artifactory.crt"
+# nginx_ssl_key_path: "/etc/ssl/private/artifactory.key"
+
+# System resources
+artifactory_max_heap_size: "2g"
+artifactory_min_heap_size: "512m"
+artifactory_extra_java_opts: "-server -Xss256k -XX:+UseG1GC"
+
+# Storage configuration
+artifactory_data_dir: "{{ artifactory_home }}/var/data"
+artifactory_backup_dir: "{{ artifactory_home }}/var/backup"
+artifactory_logs_dir: "{{ artifactory_home }}/var/log"
+
+# Security
+artifactory_master_key: ""  # Leave empty to auto-generate
+artifactory_join_key: ""
+
+# License (for Pro version)
+artifactory_license: ""
+
+# Feature flags
+artifactory_enable_ha: false
+artifactory_enable_xray: false

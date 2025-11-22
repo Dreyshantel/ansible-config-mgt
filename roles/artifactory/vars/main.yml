@@ -1,2 +1,42 @@
 ---
-# vars file for artifactory
+# JFrog Artifactory Variables for Ubuntu (Do not override)
+
+# Download URLs
+artifactory_download_url: "https://releases.jfrog.io/artifactory/artifactory-{{ artifactory_flavour }}/org/artifactory/{{ artifactory_flavour }}/jfrog-artifactory-{{ artifactory_flavour }}/{{ artifactory_version }}/jfrog-artifactory-{{ artifactory_flavour }}-{{ artifactory_version }}-linux.tar.gz"
+
+# System paths
+artifactory_bin_dir: "{{ artifactory_home }}/app/bin"
+artifactory_etc_dir: "{{ artifactory_home }}/var/etc"
+artifactory_systemd_service: "/etc/systemd/system/artifactory.service"
+
+# Ubuntu/Debian package dependencies
+system_packages:
+  - "{{ java_package }}"
+  - wget
+  - curl
+  - tar
+  - unzip
+  - net-tools
+  - gnupg2
+  - apt-transport-https
+  - ca-certificates
+  - software-properties-common
+
+nginx_packages:
+  - nginx
+
+postgresql_packages:
+  - "postgresql-{{ postgresql_version }}"
+  - "postgresql-contrib-{{ postgresql_version }}"
+  - python3-psycopg2
+  - postgresql-client
+
+# Database configuration
+artifactory_db_name: "artifactory"
+artifactory_db_schema: "public"
+
+# PostgreSQL paths for Ubuntu
+postgresql_config_dir: "/etc/postgresql/{{ postgresql_version }}/main"
+postgresql_data_dir: "/var/lib/postgresql/{{ postgresql_version }}/main"
+postgresql_hba_file: "{{ postgresql_config_dir }}/pg_hba.conf"
+postgresql_conf_file: "{{ postgresql_config_dir }}/postgresql.conf"
