@@ -1,9 +1,7 @@
 ---
-# roles/mysql/tasks/main.yml
-
 - name: Ensure MySQL service is running
   ansible.builtin.service:
-    name: mysql
+    name: "{{ 'mysqld' if ansible_facts['os_family'] == 'RedHat' else 'mysql' }}"
     state: started
     enabled: yes
 
@@ -16,6 +14,8 @@
     encoding: "{{ item.encoding }}"
     collation: "{{ item.collation }}"
     state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
   loop: "{{ mysql_database }}"
 
 - name: Create MySQL users
@@ -25,30 +25,8 @@
     password: "{{ item.password }}"
     priv: "{{ item.priv }}"
     state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    auth_plugin: mysql_native_password
   loop: "{{ mysql_users }}"
 
-# Variable configuration.
-- ansible.builtin.include_tasks: variables.yml
-
-# Setup/install tasks.
-- ansible.builtin.include_tasks: setup-RedHat.yml
-  when: ansible_os_family == 'RedHat'
-
-- ansible.builtin.include_tasks: setup-Debian.yml
-  when: ansible_os_family == 'Debian'
-
-- ansible.builtin.include_tasks: setup-Archlinux.yml
-  when: ansible_os_family == 'Archlinux'
-
-- name: Check if MySQL packages were installed.
-  ansible.builtin.set_fact:
-    mysql_install_packages: "{{ (rh_mysql_install_packages is defined and rh_mysql_install_packages.changed)
-      or (deb_mysql_install_packages is defined and deb_mysql_install_packages.changed)
-      or (arch_mysql_install_packages is defined and arch_mysql_install_packages.changed) }}"
-
-# Configure MySQL.
-- ansible.builtin.include_tasks: configure.yml
-- ansible.builtin.include_tasks: secure-installation.yml
-- ansible.builtin.include_tasks: databases.yml
-- ansible.builtin.include_tasks: users.yml
-- ansible.builtin.include_tasks: replication.yml
