@@ -1,4 +1,32 @@
 ---
+# roles/mysql/tasks/main.yml
+
+- name: Ensure MySQL service is running
+  ansible.builtin.service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Secure MySQL installation
+  include_tasks: secure-installation.yml
+
+- name: Create MySQL databases
+  community.mysql.mysql_db:
+    name: "{{ item.name }}"
+    encoding: "{{ item.encoding }}"
+    collation: "{{ item.collation }}"
+    state: present
+  loop: "{{ mysql_database }}"
+
+- name: Create MySQL users
+  community.mysql.mysql_user:
+    name: "{{ item.name }}"
+    host: "{{ item.host }}"
+    password: "{{ item.password }}"
+    priv: "{{ item.priv }}"
+    state: present
+  loop: "{{ mysql_users }}"
+
 # Variable configuration.
 - ansible.builtin.include_tasks: variables.yml
 
