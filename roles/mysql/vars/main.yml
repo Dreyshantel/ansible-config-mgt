@@ -1,27 +1,11 @@
 # roles/mysql/vars/main.yml
-
-# MySQL root credentials
-mysql_root_username: root
-mysql_root_password: "$077Timzy2557!"  # Use ansible-vault in production
-
-# Databases to create
-mysql_databases:
-  - name: tooling
+mysql_root_password: ""
+mysql_database:
+  - name: homestead
     encoding: utf8
-    collation: utf8_general_ci
-
-# Users to create
+    collation: utf8_genral_cli
 mysql_users:
-  - name: webaccess
-    host: "172.31.2.0/24"  # Webserver subnet CIDR
-    password: "Admin123$"
-    priv: "tooling.*:ALL,GRANT"
-
-# Optional flags
-skip_mycnf: true
-skip_mysql_users: true
-mysql_hide_passwords: true        # hides sensitive info in logs
-mysql_install_packages: true      # for initial MySQL setup
-mysql_user_password_update: true  # allow updating passwords
-mysql_copy_root_user_mycnf: false # not needed for Option 1
-
+  - name: homestead
+    host: "%"
+    password: sePret^i1
+    priv: "*.*ALL"
