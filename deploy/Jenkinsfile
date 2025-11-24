@@ -1,101 +1,36 @@
 pipeline {
     agent any
 
-    environment {
-        ANSIBLE_CONFIG = "${WORKSPACE}/deploy/ansible.cfg"
+  stages {
+
+     stage("Initial cleanup") {
+          steps {
+            dir("${WORKSPACE}") {
+              deleteDir()
+            }
+          }
+        }
+
+    stage('Checkout SCM') {
+      steps {
+            git branch: 'main', url: 'https://github.com/StegTechHub/php-todo.git'
+      }
     }
 
-    parameters {
-        string(name: 'inventory', defaultValue: 'dev', description: 'Inventory file for environment')
-        string(name: 'branch', defaultValue: 'main', description: 'Branch to checkout')
-        string(name: 'repo_url', defaultValue: 'https://github.com/Dreyshantel/ansible-config-mgt.git', description: 'Repository URL')
-        text(name: 'ssh_hosts', defaultValue: 'ec2-user@172.31.2.188\nec2-user@172.31.2.111\nec2-user@172.31.2.109\nubuntu@172.31.2.9', description: 'List of SSH hosts, one per line')
-        string(name: 'playbook_path', defaultValue: '${WORKSPACE}/playbooks/site.yml', description: 'Path to the Ansible playbook')
-        string(name: 'credentials_id', defaultValue: 'private-key', description: 'Credentials ID for SSH and Ansible')    
+    stage('Exucute Unit Tests') {
+      steps {
+             sh './vendor/bin/phpunit'
+      }
+
+
+    stage('Prepare Dependencies') {
+      steps {
+             sh 'mv .env.sample .env'
+             sh 'composer install'
+             sh 'php artisan migrate'
+             sh 'php artisan db:seed'
+             sh 'php artisan key:generate'
+      }
     }
-
-    stages {
-
-        stage('Initial cleanup') {
-            steps {
-                deleteDir()
-            }
-        }
-
-        stage('Checkout SCM') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "*/${params.branch}"]],
-                    userRemoteConfigs: [[
-                        url: "${params.repo_url}",
-                        credentialsId: 'GitHub-credentials'
-                    ]]
-                ])
-            }
-        }
-
-        stage('Prepare Ansible For Execution') {
-            steps {
-                sh '''
-                    echo "WORKSPACE: ${WORKSPACE}"
-                    if [ -f "${WORKSPACE}/deploy/ansible.cfg" ]; then
-                        echo "Found ansible.cfg — updating roles_path..."
-                        sed -i "3 a roles_path=${WORKSPACE}/roles" ${WORKSPACE}/deploy/ansible.cfg
-                    else
-                        echo "ansible.cfg not found!"
-                        exit 1
-                    fi
-                '''
-            }
-        }
-
-        stage('Test SSH Connections') {
-            steps {
-                script {
-                    def allHosts = params.ssh_hosts.split('\n')
-                    sshagent([params.credentials_id]) {
-                        allHosts.each { host ->
-                            sh "ssh -o StrictHostKeyChecking=no ${host} exit || echo 'SSH failed for ${host}'"
-                        }
-                    }
-                }
-            }
-        }
-
-       stage('Run Ansible playbook') {
-    steps {
-        sshagent([params.credentials_id]) {
-            withCredentials([string(credentialsId: 'mysql_root_password', variable: 'MYSQL_ROOT_PASSWORD')]) {
-                ansiblePlaybook(
-                    become: true,
-                    credentialsId: params.credentials_id,
-                    disableHostKeyChecking: true,
-                    installation: 'ansible',
-                    inventory: "${WORKSPACE}/inventory/${params.inventory}",
-                    playbook: "${WORKSPACE}/playbooks/site.yml"
-                )
-            }
-        }
-    }
-} 
-
-        stage('Clean Workspace after build') {
-            steps {
-                cleanWs(cleanWhenAborted: true, 
-                        cleanWhenFailure: true,
-                        cleanWhenNotBuilt: true, 
-                        cleanWhenUnstable: true,
-                        deleteDirs: true)
-            }
-        }
-    }
-
-    post {
-        always {
-            echo 'Final cleanup after build...'
-            cleanWs(deleteDirs: true)
-        }
-    }
+  }
 }
-
