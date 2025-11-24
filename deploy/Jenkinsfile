@@ -63,20 +63,22 @@ pipeline {
             }
         }
 
-        stage('Run Ansible playbook') {
-            steps {
-                sshagent([params.credentials_id]) {
-                    ansiblePlaybook(
-                        become: true,
-                        credentialsId: params.credentials_id,
-                        disableHostKeyChecking: true,
-                        installation: 'ansible',
-                        inventory: "${WORKSPACE}/inventory/${params.inventory}",
-                        playbook: "${WORKSPACE}/playbooks/site.yml"
-                    )
-                }
+       stage('Run Ansible playbook') {
+    steps {
+        sshagent([params.credentials_id]) {
+            withCredentials([string(credentialsId: 'mysql_root_password', variable: 'MYSQL_ROOT_PASSWORD')]) {
+                ansiblePlaybook(
+                    become: true,
+                    credentialsId: params.credentials_id,
+                    disableHostKeyChecking: true,
+                    installation: 'ansible',
+                    inventory: "${WORKSPACE}/inventory/${params.inventory}",
+                    playbook: "${WORKSPACE}/playbooks/site.yml"
+                )
             }
         }
+    }
+} 
 
         stage('Clean Workspace after build') {
             steps {

@@ -1,4 +1,3 @@
----
 - name: Ensure MySQL service is running
   ansible.builtin.service:
     name: "{{ 'mysqld' if ansible_facts['os_family'] == 'RedHat' else 'mysql' }}"
@@ -7,4 +6,26 @@
 
 - name: Secure MySQL installation
   include_tasks: secure-installation.yml
+
+- name: Create MySQL databases
+  community.mysql.mysql_db:
+    name: "{{ item.name }}"
+    encoding: "{{ item.encoding }}"
+    collation: "{{ item.collation }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  loop: "{{ mysql_database }}"
+
+- name: Create MySQL users
+  community.mysql.mysql_user:
+    name: "{{ item.name }}"
+    host: "{{ item.host }}"
+    password: "{{ item.password }}"
+    priv: "{{ item.priv }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    auth_plugin: mysql_native_password
+  loop: "{{ mysql_users }}"
 
