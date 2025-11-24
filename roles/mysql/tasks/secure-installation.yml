@@ -1,68 +1,52 @@
 ---
-# Ensure MySQL root password is set using check_implicit_admin
-- name: Ensure MySQL root user password is set
+# Secure MySQL installation tasks
+
+- name: Ensure MySQL root password is set
   community.mysql.mysql_user:
     name: root
     host: localhost
     password: "{{ mysql_root_password }}"
+    login_user: root
+    login_password: "{{ mysql_root_password | default(omit) }}"
+    check_implicit_admin: yes
     priv: "*.*:ALL"
     state: present
-    check_implicit_admin: yes
   no_log: true
 
-# Remove anonymous users
 - name: Remove anonymous MySQL users
   community.mysql.mysql_user:
     name: ""
     host_all: yes
     state: absent
-    check_implicit_admin: yes
-  no_log: true
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  ignore_errors: yes
 
-# Disallow root login remotely
-- name: Disallow root login remotely
+- name: Disallow root login from remote hosts
   community.mysql.mysql_user:
     name: root
-    host: "%"
+    host: "{{ item }}"
     state: absent
-    check_implicit_admin: yes
-  no_log: true
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  loop:
+    - "%"
+    - "{{ ansible_facts['fqdn'] | default('localhost') }}"
+  ignore_errors: yes
 
-# Remove the test database
-- name: Remove MySQL test database
+- name: Remove test database if exists
   community.mysql.mysql_db:
     name: test
     state: absent
-    check_implicit_admin: yes
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
 
-# Flush privileges
-- name: Flush MySQL privileges
+- name: Reload privilege tables
   community.mysql.mysql_user:
     name: root
     host: localhost
     state: present
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
     check_implicit_admin: yes
-
-# Create application databases
-- name: Ensure application databases are present
-  community.mysql.mysql_db:
-    name: "{{ item.name }}"
-    encoding: "{{ item.encoding }}"
-    collation: "{{ item.collation }}"
-    state: present
-    check_implicit_admin: yes
-  loop: "{{ mysql_database }}"
-
-# Create application users
-- name: Ensure application users are present
-  community.mysql.mysql_user:
-    name: "{{ item.name }}"
-    host: "{{ item.host }}"
-    password: "{{ item.password }}"
-    priv: "{{ item.priv }}"
-    auth_plugin: "{{ item.auth_plugin | default('mysql_native_password') }}"
-    state: present
-    check_implicit_admin: yes
-  loop: "{{ mysql_users }}"
-  no_log: true
 
