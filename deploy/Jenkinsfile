@@ -1,17 +1,19 @@
 pipeline {
     agent any
 
+    environment {
+        COMPOSER_ALLOW_SUPERUSER = '1'
+    }
+
     stages {
 
         stage("Initial cleanup") {
             steps {
-                dir("${WORKSPACE}") {
-                    deleteDir()
-                }
+                deleteDir()
             }
         }
 
-        stage('Checkout SCM') {
+        stage('Checkout PHP Project') {
             steps {
                 git branch: 'main', url: 'https://github.com/StegTechHub/php-todo.git'
             }
@@ -19,20 +21,28 @@ pipeline {
 
         stage('Prepare Dependencies') {
             steps {
-                sh 'mv .env.sample .env || true'  // in case .env already exists
-                sh 'composer install'
-                sh 'php artisan key:generate'
-                sh 'php artisan migrate'
-                sh 'php artisan db:seed'
+                sh '''
+                    mv .env.sample .env || true
+                    composer install --no-interaction --prefer-dist
+                    php artisan key:generate
+                    php artisan migrate --force
+                    php artisan db:seed --force
+                '''
             }
         }
 
         stage('Execute Unit Tests') {
             steps {
-                sh './vendor/bin/phpunit'
+                sh './vendor/bin/phpunit --colors=always'
             }
         }
 
+    }
+
+    post {
+        always {
+            cleanWs(deleteDirs: true)
+        }
     }
 }
 
