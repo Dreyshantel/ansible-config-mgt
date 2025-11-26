@@ -1,52 +1,38 @@
 pipeline {
     agent any
 
-    environment {
-        COMPOSER_ALLOW_SUPERUSER = "1"
+  stages {
+
+     stage("Initial cleanup") {
+          steps {
+            dir("${WORKSPACE}") {
+              deleteDir()
+            }
+          }
+        }
+
+    stage('Checkout SCM') {
+      steps {
+            git branch: 'main', url: 'https://github.com/StegTechHub/php-todo.git'
+      }
     }
 
-    stages {
-
-        stage("Initial cleanup") {
-            steps {
-                deleteDir()
-            }
-        }
-
-        stage("Checkout SCM") {
-            steps {
-                git branch: 'main', url: 'https://github.com/StegTechHub/php-todo.git'
-            }
-        }
-
-        stage("Prepare Dependencies") {
-            steps {
-                // Copy .env if missing
-                sh 'cp .env.example .env || true'
-                // Install composer dependencies
-                sh 'composer install --no-interaction --prefer-dist'
-                // Generate app key
-                sh 'php artisan key:generate'
-                // Run migrations & seeds (force to allow CI)
-                sh 'php artisan migrate --force'
-                sh 'php artisan db:seed --class=DatabaseSeeder --force'
-            }
-        }
-
-        stage("Execute Unit Tests") {
-            steps {
-                // Run all unit tests
-                sh './vendor/bin/phpunit --testsuite Unit || true'
-            }
-        }
-
+    stage('Prepare Dependencies') {
+      steps {
+             sh 'mv .env.sample .env'
+             sh 'composer install'
+             sh 'php artisan migrate'
+             sh 'php artisan db:seed'
+             sh 'php artisan key:generate'
+      }
     }
 
-    post {
-        always {
-            echo 'Cleaning workspace after build...'
-            cleanWs(deleteDirs: true)
-        }
+    stage('Execute Unit Tests') {
+      steps {
+             sh './vendor/bin/phpunit'
+      }
     }
+  }
 }
 
+    
